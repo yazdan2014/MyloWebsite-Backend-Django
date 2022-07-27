@@ -10,6 +10,6 @@ class CommandsSerializer(serializers.Serializer):
 
 class ArticlesSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=100)
-    description = serializers.CharField(max_length=500)
+    description = serializers.JSONField()
     tags = serializers.CharField(max_length=100)
     date = serializers.DateField()

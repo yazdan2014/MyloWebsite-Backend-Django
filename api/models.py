@@ -23,7 +23,7 @@ class Commands(models.Model):
 
 class Articles(models.Model):
     title = models.CharField(max_length=100)
-    description = models.TextField(max_length=500)
+    description = models.JSONField()
     tags = models.CharField(max_length=100)
     date = models.DateField()
 
