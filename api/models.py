@@ -29,3 +29,17 @@ class Articles(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
+class Bots(models.Model):
+    name = models.CharField(max_length=256)
+    password = models.CharField(max_length=64)
+    created = models.DateTimeField(auto_now_add=True)
+
+
+class BotTokens(models.Model):
+    bot = models.ForeignKey(Bots, on_delete=models.CASCADE, related_name='bot')
+    token = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+

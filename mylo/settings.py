@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     "corsheaders",
+    "channels"
 
 ]
 
@@ -97,6 +98,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mylo.wsgi.application'
+ASGI_APPLICATION = "mylo.asgi.application"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -107,6 +117,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': 'mydatabase',
+    },
+    'posgres': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgrespw',
+        'HOST': 'localhost',
+        'PORT': '49153',
     }
 }
 
