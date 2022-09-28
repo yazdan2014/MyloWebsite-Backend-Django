@@ -1,69 +1,51 @@
+from cgitb import text
+from email import message
+from pickle import TRUE
 from channels.consumer import SyncConsumer
 from channels.exceptions import StopConsumer
+from channels.generic.websocket import WebsocketConsumer
 import json
+from asgiref.sync import async_to_sync
 from .models import BotTokens
 
-class ClientConsumer(SyncConsumer):
-    def websocket_connect(self):
-            self.user = self.scope["user"]
-            if self.user:
-                discord_info = self.get_discord_info()
-                self.guild = discord_info["guild"]
-                self.channel_layer.group_add(
-                    self.guild,
-                    self.channel_name
-                )
+class ClientConsumer(WebsocketConsumer):
+    def websocket_connect(self, event):
+        self.user = self.scope["user"]
+        if self.user:
+            # discord_info = self.get_discord_info()
+            self.guildId = self.scope['url_route']['kwargs']['guild_id']
+            async_to_sync(self.channel_layer.group_add)(self.guildId, self.channel_name)
 
-                self.send({
-                    "type": "websocket.accept",
-                })
-            else:
-                self.send({'type': 'websocket.close', })
+            async_to_sync(self.channel_layer.group_send)("bot", {
+                "type":"message.send",
+                "message":json.dumps({"type":"newDashboard", "guildId":self.guildId})
+            })
 
-          
-        
-
-    def websocket_receive(self, event):
-
-
-        text = event["text"]
-
-        # if text['type'] == "bot_response":
-
-
-
-        # self.send({
-        #     "type": "websocket.send",
-        #     "text": event["text"],
-        # })
-
-    def get_discord_info():
-        return {"dicord_id": "dicord_user_id", "guild": "guild_name"}
-
-
-    def disconnect(self, close_code):
-        self.channel_layer.group_discard(self.guild, self.channel_name)
-        raise StopConsumer
-
-class BotConsumer(SyncConsumer):
-    def websocket_connect(self):
-        self.token = self.scope['url_route']['kwargs']['token']
-        res = self.authenticate_bot(self.token)
-        if res:
-              self.channel_layer.group_add("bot", self.channel_name)
-              self.send({
-                    "type": "websocket.accept",
-                })
+            self.accept()
         else:
-            self.send({'type': 'websocket.close', })
-          
-        
+            self.close()
 
     def websocket_receive(self, event):
-
-
-        text = event["text"]
-
+        text_data = event.get('text', None)
+        message = json.loads(text_data)
+        print(message)
+        if message['type'] == "forceskip":
+            async_to_sync(self.channel_layer.group_send)("bot", {
+                "type":"message.send",
+                "message":json.dumps({"type":"command", "command":"forceskip", "guildId":message['guildId']})
+            })
+        
+        elif message['type'] == "unpause":
+            async_to_sync(self.channel_layer.group_send)("bot", {
+                "type":"message.send",
+                "message":json.dumps({"type":"command", "command":"unpause", "guildId":message['guildId']})
+            })
+        
+        elif message['type'] == "pause":
+            async_to_sync(self.channel_layer.group_send)("bot", {
+                "type":"message.send",
+                "message":json.dumps({"type":"command", "command":"pause", "guildId":message['guildId']})
+            })
         # if text['type'] == "bot_response":
 
 
@@ -73,9 +55,62 @@ class BotConsumer(SyncConsumer):
         #     "text": event["text"],
         # })
 
-    def disconnect(self, close_code):
+    def get_discord_info(self):
+        return {"dicord_id": "dicord_user_id", "guildId": "696297810462769222"}
+
+
+    def websocket_disconnect(self, close_code):
+        pass
+        # self.channel_layer.group_discard(self.guild, self.channel_name)
+        # raise StopConsumer
+
+    def message_send(self, event):        
+        print(event)
+        self.send(event["message"])
+
+class BotConsumer(WebsocketConsumer):
+    def connect(self):
+        # self.token = self.scope['url_route']['kwargs']['token']
+        # res = self.authenticate_bot(self.token)
+        if True:
+            async_to_sync(self.channel_layer.group_add)("bot", self.channel_name)
+            self.accept()
+ 
+        else:
+            self.send({'type': 'websocket.close', })        
+    def receive(self, text_data):
+        message = json.loads(text_data)
+        
+        if message["type"] == "status":
+            if message['status'] == 'playing':
+                async_to_sync(self.channel_layer.group_send)(message['guildId'], {
+                    "type":"message.send",
+                    "message":json.dumps({"type":"status", "status":"playing", "metadata":message['metadata']})
+                })
+            if message['status'] == "idle":
+                async_to_sync(self.channel_layer.group_send)(message['guildId'], {
+                    "type":"message.send",
+                    "message":json.dumps({"type":"status", "status":"idle"})
+                })
+
+        # text_data = event.get('text', None)
+        # message = json.loads(text_data)
+        # print(message)
+        # if text['type'] == "bot_response":
+
+ 
+ 
+        # self.send({
+        #     "type": "websocket.send",
+        #     "text": event["text"],
+        # })
+ 
+    def disconnect(self, close_code):  
         self.channel_layer.group_discard('bot', self.channel_name)
         raise StopConsumer
+
+    def message_send(self, event):
+        self.send(text_data=event["message"])
 
     def authenticate_bot(token):
         try:

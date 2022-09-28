@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>    
+    Guild Id <input type="text" id="guildId"> <button onclick="newDashboard()">connect</button>
+    <br><br>
+    <div id="status"></div>
+    <button id="unpause">resume</button>
+    <button id="pause">pause</button>
+    <button id="skip">skip</button>
+    <script> 
+
+    function newDashboard(){
+        let guildId = document.getElementById("guildId").value
+        const socket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/user/'
+            + guildId
+            + '/'
+        );
+
+        socket.onmessage = function(e) {
+            const message = JSON.parse(e.data);
+            console.log(message)
+            switch(message.type){
+                case "status":
+                    if(message.status == "playing"){
+                        document.getElementById("status").innerHTML =`
+                            <h1>STATUS</h1>
+                            Now Playing: ${message.metadata.title}<br>
+                            Url: ${message.metadata.url}<br>
+                            Duration:${message.metadata.rawDuration}<br>
+                            <img src="${message.metadata.thumbnail}">
+                        `
+                    }else if (message.status == "idle"){
+                        document.getElementById("status").innerHTML =`
+                            <h1>STATUS</h1>
+                            Idle ...
+                        `
+                    }
+            }
+        };
+
+        socket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };   
+
+        document.getElementById("pause").onclick = pause
+        document.getElementById("unpause").onclick = unpause
+        document.getElementById("skip").onclick = skip
+
+        function pause(){
+            socket.send(JSON.stringify({'type': 'pause', "guildId":guildId}));
+        }
+        function unpause(){
+            socket.send(JSON.stringify({'type': 'unpause', "guildId":guildId}));
+        }
+        function skip(){
+            socket.send(JSON.stringify({'type': 'forceskip', "guildId":guildId}));
+        }     
+    }
+
+
+    </script>
+</body>
+</html>
