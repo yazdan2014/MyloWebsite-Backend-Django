@@ -40,11 +40,17 @@ class ClientConsumer(WebsocketConsumer):
                 "type":"message.send",
                 "message":json.dumps({"type":"command", "command":"unpause", "guildId":message['guildId']})
             })
-        
+
         elif message['type'] == "pause":
             async_to_sync(self.channel_layer.group_send)("bot", {
                 "type":"message.send",
                 "message":json.dumps({"type":"command", "command":"pause", "guildId":message['guildId']})
+            })
+
+        elif message['type'] == "endDashboard":
+            async_to_sync(self.channel_layer.group_send)("bot", {
+                "type":"message.send",
+                "message":json.dumps({"type":"endDashboard", "guildId":message['guildId']})
             })
         # if text['type'] == "bot_response":
 
@@ -59,7 +65,7 @@ class ClientConsumer(WebsocketConsumer):
         return {"dicord_id": "dicord_user_id", "guildId": "696297810462769222"}
 
 
-    def websocket_disconnect(self, close_code):
+    def disconnect(self, close_code):
         pass
         # self.channel_layer.group_discard(self.guild, self.channel_name)
         # raise StopConsumer

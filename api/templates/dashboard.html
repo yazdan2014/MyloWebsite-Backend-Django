@@ -10,9 +10,11 @@
     Guild Id <input type="text" id="guildId"> <button onclick="newDashboard()">connect</button>
     <br><br>
     <div id="status"></div>
+    <input>
     <button id="unpause">resume</button>
     <button id="pause">pause</button>
     <button id="skip">skip</button>
+    <button id="endDashboard">endDashboard</button>
     <script> 
 
     function newDashboard(){
@@ -54,6 +56,8 @@
         document.getElementById("pause").onclick = pause
         document.getElementById("unpause").onclick = unpause
         document.getElementById("skip").onclick = skip
+        document.getElementById("endDashboard").onclick = endDashboard
+        
 
         function pause(){
             socket.send(JSON.stringify({'type': 'pause', "guildId":guildId}));
@@ -63,7 +67,10 @@
         }
         function skip(){
             socket.send(JSON.stringify({'type': 'forceskip', "guildId":guildId}));
-        }     
+        }  
+        function endDashboard(){
+            socket.send(JSON.stringify({'type': 'endDashboard', "guildId":guildId}));
+        }       
     }
 
 

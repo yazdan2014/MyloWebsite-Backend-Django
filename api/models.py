@@ -1,3 +1,4 @@
+from enum import unique
 from django.db import models
 
 
@@ -24,7 +25,7 @@ class Commands(models.Model):
 class Articles(models.Model):
     title = models.CharField(max_length=100)
     description = models.JSONField()
-    tags = models.CharField(max_length=100)
+    tags = models.CharField(max_length=100,unique=True)
     date = models.DateField()
 
     def __str__(self):
